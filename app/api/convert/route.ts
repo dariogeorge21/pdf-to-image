@@ -3,6 +3,24 @@ import { NextRequest, NextResponse } from "next/server";
 export const runtime = "nodejs";
 export const maxDuration = 60; // seconds (Vercel hobby: 10s, pro: 60s)
 
+type CanvasModule = typeof import("@napi-rs/canvas");
+
+function installCanvasGlobals(canvasModule: CanvasModule) {
+  const globalScope = globalThis as any;
+
+  if (globalScope.DOMMatrix == null) {
+    globalScope.DOMMatrix = canvasModule.DOMMatrix;
+  }
+
+  if (globalScope.ImageData == null) {
+    globalScope.ImageData = canvasModule.ImageData;
+  }
+
+  if (globalScope.Path2D == null) {
+    globalScope.Path2D = canvasModule.Path2D;
+  }
+}
+
 export async function POST(req: NextRequest) {
   try {
     // ── 1. Parse multipart form data ──────────────────────────────────────
@@ -30,16 +48,23 @@ export async function POST(req: NextRequest) {
 
     // ── 2. Convert buffer ─────────────────────────────────────────────────
     const arrayBuffer = await file.arrayBuffer();
-    const pdfBuffer = Buffer.from(arrayBuffer);
+    const pdfBuffer = new Uint8Array(arrayBuffer);
 
-    // Dynamic import to avoid issues with SSR/edge bundling
-    const { pdf } = await import("pdf-to-img");
+    const canvasModule = await import("@napi-rs/canvas");
+    installCanvasGlobals(canvasModule);
+
+    // Dynamic import keeps the native renderer on the server only.
+    const pdfjsLib = await import("pdfjs-dist/legacy/build/pdf.mjs");
     const JSZip = (await import("jszip")).default;
 
     // Convert each page to a PNG Buffer at 300 DPI (scale ≈ 300/72 ≈ 4.17)
     const SCALE = 300 / 72;
-    const document = await pdf(pdfBuffer, { scale: SCALE });
-    const pageCount = document.length;
+    const loadingTask = pdfjsLib.getDocument({
+      data: pdfBuffer,
+      isEvalSupported: false,
+    } as any);
+    const document = await loadingTask.promise;
+    const pageCount = document.numPages;
 
     // ── 3. Build ZIP ──────────────────────────────────────────────────────
     const zip = new JSZip();
@@ -49,14 +74,41 @@ export async function POST(req: NextRequest) {
       throw new Error("Failed to create ZIP folder.");
     }
 
-    let pageIndex = 0;
-    for await (const pageImage of document) {
-      pageIndex++;
-      const paddedNum = String(pageIndex).padStart(
-        String(pageCount).length,
-        "0"
-      );
-      imagesFolder.file(`page_${paddedNum}.png`, pageImage);
+    try {
+      for (let pageIndex = 1; pageIndex <= pageCount; pageIndex++) {
+        const page = await document.getPage(pageIndex);
+
+        try {
+          const viewport = page.getViewport({ scale: SCALE });
+          const canvas = canvasModule.createCanvas(
+            Math.max(1, Math.ceil(viewport.width)),
+            Math.max(1, Math.ceil(viewport.height))
+          );
+          const context = canvas.getContext("2d");
+
+          context.fillStyle = "#ffffff";
+          context.fillRect(0, 0, canvas.width, canvas.height);
+
+          const renderTask = page.render({
+            canvasContext: context as any,
+            viewport,
+          });
+
+          await renderTask.promise;
+
+          const paddedNum = String(pageIndex).padStart(
+            String(pageCount).length,
+            "0"
+          );
+          const pngBuffer = canvas.toBuffer("image/png");
+          imagesFolder.file(`page_${paddedNum}.png`, pngBuffer);
+        } finally {
+          page.cleanup();
+        }
+      }
+    } finally {
+      await loadingTask.destroy();
+      await document.destroy();
     }
 
     // ── 4. Generate and stream ZIP ────────────────────────────────────────
