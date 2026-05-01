@@ -1,11 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   experimental: {
-    serverComponentsExternalPackages: ["pdf-to-img", "canvas"],
+    serverComponentsExternalPackages: ["@napi-rs/canvas", "pdfjs-dist"],
   },
   webpack: (config, { isServer }) => {
     if (isServer) {
-      config.externals = [...(config.externals || []), "canvas"];
+      config.externals = [...(config.externals || []), "@napi-rs/canvas"];
     }
     return config;
   },
