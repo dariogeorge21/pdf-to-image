@@ -9,7 +9,7 @@ A minimal, polished **Next.js 14 App Router** app that converts every page of a 
 | Layer | Library |
 |---|---|
 | Framework | Next.js 14 (App Router) |
-| PDF → PNG | `pdf-to-img` (wraps pdfjs-dist + canvas) |
+| PDF → PNG | `pdfjs-dist` + `@napi-rs/canvas` |
 | ZIP bundling | `jszip` |
 | Styling | CSS Modules (Soft UI / Minimalist) |
 | Font | DM Sans + DM Mono (Google Fonts) |
@@ -21,15 +21,8 @@ A minimal, polished **Next.js 14 App Router** app that converts every page of a 
 ### Prerequisites
 
 - **Node.js 18+**
-- On Linux/macOS you may need the `canvas` native addon dependencies:
-  ```bash
-  # Ubuntu / Debian
-  sudo apt-get install -y build-essential libcairo2-dev libpango1.0-dev \
-    libjpeg-dev libgif-dev librsvg2-dev
-
-  # macOS (Homebrew)
-  brew install pkg-config cairo pango libpng jpeg giflib librsvg
-  ```
+- The renderer uses `@napi-rs/canvas`, which ships prebuilt binaries for common Linux and macOS targets.
+- If your platform falls back to source compilation, install the native build toolchain recommended by that package.
 
 ### Install & Run
 
@@ -94,7 +87,7 @@ pdf-to-img-converter/
 - Max file size: **10 MB**
 - Only **PDF** files are accepted
 - Serverless timeout: 60 s (adjust `maxDuration` in the route file)
-- PDF rendering uses the system's canvas library — ensure native deps are installed
+- PDF rendering uses a native canvas backend bundled with the application dependencies
 
 ---
 
@@ -116,4 +109,4 @@ Add a `vercel.json` to increase the function timeout if needed:
 
 ### Docker
 
-If deploying in a container, ensure `canvas` system dependencies are included in the Dockerfile.
+If deploying in a container, make sure the image can install native Node modules during `npm install`.
