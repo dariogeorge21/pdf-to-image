@@ -71,7 +71,7 @@ export async function POST(req: NextRequest) {
         .replace(/\.pdf$/i, "")
         .replace(/[^a-z0-9_\-]/gi, "_") + "_images.zip";
 
-    return new Response(zipBuffer, {
+    return new Response(new Uint8Array(zipBuffer), {
       status: 200,
       headers: {
         "Content-Type": "application/zip",
