@@ -1,4 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf.mjs";
+import JSZip from "jszip";
+import path from "path";
 
 export const runtime = "nodejs";
 export const maxDuration = 60; // seconds (Vercel hobby: 10s, pro: 60s)
@@ -50,19 +53,21 @@ export async function POST(req: NextRequest) {
     const arrayBuffer = await file.arrayBuffer();
     const pdfBuffer = new Uint8Array(arrayBuffer);
 
+    // Keep NAPI canvas as dynamic import to preserve native binary loading behavior
     const canvasModule = await import("@napi-rs/canvas");
     installCanvasGlobals(canvasModule);
 
-    // Dynamic import keeps the native renderer on the server only.
-    const pdfjsLib = await import("pdfjs-dist/legacy/build/pdf.mjs");
-    const JSZip = (await import("jszip")).default;
+    // Provide the path to the standard fonts to prevent crashes on missing embedded fonts
+    const standardFontDataUrl = path.join(process.cwd(), "node_modules/pdfjs-dist/standard_fonts/");
 
     // Convert each page to a PNG Buffer at 300 DPI (scale ≈ 300/72 ≈ 4.17)
     const SCALE = 300 / 72;
     const loadingTask = pdfjsLib.getDocument({
       data: pdfBuffer,
       isEvalSupported: false,
+      standardFontDataUrl,
     } as any);
+    
     const document = await loadingTask.promise;
     const pageCount = document.numPages;
 
