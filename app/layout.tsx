@@ -14,6 +14,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        <meta name="apple-mobile-web-app-title" content="PDF Gate" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link
           rel="preconnect"
