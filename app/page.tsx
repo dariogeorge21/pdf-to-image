@@ -393,7 +393,13 @@ export default function Home() {
 
       {/* Footer */}
       <footer className={styles.footer}>
-        Built with Next.js · pdf-to-img · JSZip
+        <div>
+          Built with Next.js · pdf-to-img · JSZip
+        </div>
+        <br />
+        <div className={styles.info}>
+          Dario George · <a href="https://github.com/dariogeorge21" target="_blank" rel="noopener noreferrer">Github</a> · <a href="https://www.linkedin.com/in/dariogeorge21/" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+        </div>
       </footer>
     </div>
   );
