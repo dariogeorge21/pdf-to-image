@@ -1,4 +1,4 @@
-# PDF → Images Converter
+# PDF GATE
 
 A minimal, polished **Next.js 14 App Router** app that converts every page of a PDF into a high-resolution PNG image (300 DPI) and bundles them into a downloadable ZIP archive.
 

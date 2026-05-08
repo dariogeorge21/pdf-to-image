@@ -146,7 +146,7 @@ export default function Home() {
               <path d="M10 11l1.5 1.5L13 10" stroke="#111" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </div>
-          <span className={styles.logoText}>PDF → Images</span>
+          <span className={styles.logoText}>PDF GATE</span>
         </div>
         <span className={styles.badge}>300 DPI · PNG</span>
       </header>

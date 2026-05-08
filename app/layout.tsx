@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "PDF → Images",
+  title: "PDF GATE",
   description: "Convert PDF pages to high-resolution PNG images instantly",
 };
 
@@ -14,7 +14,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <meta name="apple-mobile-web-app-title" content="PDF Gate" />
+        <meta name="apple-mobile-web-app-title" content="PDF GATE" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link
           rel="preconnect"
